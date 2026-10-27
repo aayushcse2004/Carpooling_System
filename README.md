@@ -512,13 +512,3 @@ Expected output:
 4. **Driver KYC & Document Verification**: Automated Aadhaar/Driving License verification via Digilocker API.
 5. **Corporate Ridesharing**: Corporate domain matching allowing verified employees of the same company to commute together.
 
----
-
-## 19. License & Original Attribution
-
-This project is licensed under the **MIT License**.
-
-### Original Attribution Notice
-- **Original Author**: Nishant Bhalla
-- **Original Repository**: [https://github.com/Nishant-0203/carpooling.git](https://github.com/Nishant-0203/carpooling.git)
-- **License Terms**: Licensed under the MIT License. In compliance with the original MIT license, permission is hereby granted to use, copy, modify, merge, publish, and distribute copies of this software with proper credit given to the original author.
