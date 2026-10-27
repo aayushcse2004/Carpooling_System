@@ -1,49 +1,45 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
-import { Shield, Users, MapPin, Star } from 'lucide-react';
+import { Shield, Users, MapPin, Zap, CheckCircle2 } from 'lucide-react';
 
-const WhyCoGo = () => {
+const WhyCommuteX = () => {
   const features = [
     {
       icon: MapPin,
-      title: 'Eco-Friendly Travel',
-      description: 'Reduce your carbon footprint by sharing rides and contributing to a cleaner environment.',
-      color: 'from-green-400 to-teal-500',
-      glow: 'glow-mint',
+      title: 'Smart Commuter Matching',
+      description: 'Easily discover fellow commuters traveling along your daily route with verified pickup points.',
+      color: 'from-emerald-400 to-teal-500',
     },
     {
       icon: Shield,
-      title: 'Verified Drivers',
-      description: 'All our drivers go through strict verification processes to ensure your safety and security.',
+      title: 'Verified Driver & Rider Profiles',
+      description: 'Vehicle checks and profile authentications prioritize passenger and driver safety.',
       color: 'from-blue-400 to-cyan-500',
-      glow: 'glow-cyan',
     },
     {
-      icon: Star,
-      title: 'Secure Payments',
-      description: 'Your transactions are protected with end-to-end encryption and secure payment gateways.',
-      color: 'from-purple-400 to-pink-500',
-      glow: 'glow-purple',
+      icon: Zap,
+      title: 'Transparent Split Fares',
+      description: 'Fair per-seat cost contributions calculated by distance. No surprise surge multipliers.',
+      color: 'from-indigo-400 to-purple-500',
     },
     {
       icon: Users,
-      title: 'Live Location Sharing',
-      description: 'Share your trip details with family and friends for added peace of mind during your journey.',
-      color: 'from-orange-400 to-red-500',
-      glow: 'glow-cyan',
+      title: 'Community Safety & SOS',
+      description: 'Share journey status with close contacts and travel with peace of mind every kilometer.',
+      color: 'from-amber-400 to-rose-500',
     }
   ];
 
-  const stats = [
-    { number: '50K+', label: 'Happy Riders' },
-    { number: '15K+', label: 'Verified Drivers' },
-    { number: '100+', label: 'Cities Covered' },
-    { number: '99.9%', label: 'Safety Rating' },
+  const highlights = [
+    { label: 'Real-time Seat Tracking', desc: 'Automatic seat decrementing prevents overbooking.' },
+    { label: 'Instant Approval Workflow', desc: 'Drivers can review passenger requests seamlessly.' },
+    { label: 'Cleaner Air, Less Traffic', desc: 'Reduce urban single-occupancy vehicles.' },
+    { label: 'Zero Platform Hidden Fees', desc: 'Direct driver-passenger cooperative model.' }
   ];
 
   return (
-    <section id="why-cogo" className="py-20 px-4">
+    <section id="why-commutex" className="py-20 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Section Title */}
         <motion.div
@@ -53,81 +49,58 @@ const WhyCoGo = () => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Why CoGo?
+          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-widest block mb-2">
+            Engineered for Modern Mobility
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">CommuteX</span>?
           </h2>
-          <p className="text-xl text-gray-300 font-light max-w-2xl mx-auto">
-            Experience the future of shared transportation with our premium features designed for modern travelers
+          <p className="text-lg text-slate-300 font-light max-w-2xl mx-auto">
+            Experience reliable, pocket-friendly, and eco-conscious daily commutes with verified community drivers.
           </p>
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-            >
-              <Card className={`relative h-full glass-strong p-8 group hover:${feature.glow} transition-all duration-500 neumorphic border-white/10`}>
-                {/* Icon */}
-                <div className="mb-6">
-                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.color} p-4 group-hover:scale-110 transition-all duration-300 shadow-lg`}>
-                    <feature.icon className="w-full h-full text-white" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card className="glass p-6 rounded-2xl border-white/10 hover:border-cyan-400/30 transition-all duration-300 h-full flex flex-col justify-between">
+                  <div>
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${feature.color} flex items-center justify-center text-slate-950 mb-5 shadow-lg`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                    <p className="text-slate-300 text-sm leading-relaxed">{feature.description}</p>
                   </div>
-                </div>
-
-                {/* Content */}
-                <h3 className="text-2xl font-semibold text-white mb-4 group-hover:text-cyan-400 transition-colors">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-300 leading-relaxed text-lg">
-                  {feature.description}
-                </p>
-
-                {/* Decorative Line */}
-                <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className={`h-1 rounded-full bg-gradient-to-r ${feature.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500`}></div>
-                </div>
-
-                {/* Background Icon */}
-                <div className="absolute top-4 right-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-                  <feature.icon className="w-24 h-24 text-white" />
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* Stats Grid */}
-        <motion.div
-          className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          viewport={{ once: true }}
-        >
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
-              className="text-center group"
-              whileHover={{ scale: 1.05 }}
-            >
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-2 group-hover:animate-pulse">
-                {stat.number}
+        {/* Key Highlights Banner */}
+        <div className="glass p-6 md:p-8 rounded-2xl border-white/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {highlights.map((h, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-0.5">{h.label}</h4>
+                <p className="text-xs text-slate-400 leading-normal">{h.desc}</p>
               </div>
-              <div className="text-gray-400 group-hover:text-gray-300 transition-colors">
-                {stat.label}
-              </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 };
 
-export default WhyCoGo;
+export default WhyCommuteX;

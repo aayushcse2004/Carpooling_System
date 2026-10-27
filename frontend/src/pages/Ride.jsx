@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "sonner"
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import LOCATIONS from "@/constants/locations";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,7 @@ const buttonHover = {
 };
 
 export default function RideSearchPage() {
+  const navigate = useNavigate();
   const location = useLocation();
   const rideQuery = location.state || {};
 
@@ -94,146 +96,7 @@ export default function RideSearchPage() {
   const [suggestionsTo, setSuggestionsTo] = useState([]);
   const [sortOption, setSortOption] = useState("recommended");
 
-  const locations = [
-    // Chandigarh & Tricity
-    "Chandigarh, Chandigarh, India",
-    "Chandigarh Airport, Chandigarh, India",
-    "Chandigarh Railway Station, Chandigarh, India",
-    "Sector 17, Chandigarh, India",
-    "Sector 43, Chandigarh, India",
-    "Panchkula, Haryana, India",
-    "Mohali, Punjab, India",
-    "Zirakpur, Punjab, India",
-    "Manimajra, Chandigarh, India",
-    "IT Park, Chandigarh, India",
-
-    // Delhi NCR
-    "New Delhi, Delhi, India",
-    "Old Delhi, Delhi, India",
-    "Delhi Airport (IGI), Delhi, India",
-    "Delhi Railway Station, Delhi, India",
-    "Connaught Place, Delhi, India",
-    "Saket, Delhi, India",
-    "Noida, Uttar Pradesh, India",
-    "Greater Noida, Uttar Pradesh, India",
-    "Gurgaon, Haryana, India",
-    "Faridabad, Haryana, India",
-    "Ghaziabad, Uttar Pradesh, India",
-
-    // Mumbai Metropolitan Region
-    "Mumbai, Maharashtra, India",
-    "Mumbai Airport (BOM), Maharashtra, India",
-    "Mumbai Central Railway Station, Maharashtra, India",
-    "Andheri, Maharashtra, India",
-    "Bandra, Maharashtra, India",
-    "Borivali, Maharashtra, India",
-    "Navi Mumbai, Maharashtra, India",
-    "Thane, Maharashtra, India",
-
-    // Bangalore
-    "Bengaluru, Karnataka, India",
-    "Bangalore Airport (BLR), Karnataka, India",
-    "Majestic Bus Stand, Karnataka, India",
-    "KR Puram, Karnataka, India",
-    "Electronic City, Karnataka, India",
-    "Whitefield, Karnataka, India",
-
-    // Hyderabad
-    "Hyderabad, Telangana, India",
-    "Hyderabad Airport (RGIA), Telangana, India",
-    "Secunderabad, Telangana, India",
-    "Gachibowli, Telangana, India",
-    "Hitech City, Telangana, India",
-
-    // Kolkata
-    "Kolkata, West Bengal, India",
-    "Howrah Railway Station, West Bengal, India",
-    "Sealdah Railway Station, West Bengal, India",
-    "Kolkata Airport (CCU), West Bengal, India",
-    "Salt Lake City, West Bengal, India",
-
-    // Chennai
-    "Chennai, Tamil Nadu, India",
-    "Chennai Airport (MAA), Tamil Nadu, India",
-    "Chennai Central Railway Station, Tamil Nadu, India",
-    "T Nagar, Tamil Nadu, India",
-    "Velachery, Tamil Nadu, India",
-
-    // Pune
-    "Pune, Maharashtra, India",
-    "Shivajinagar, Maharashtra, India",
-    "Pune Railway Station, Maharashtra, India",
-    "Hinjewadi, Maharashtra, India",
-    "Kothrud, Maharashtra, India",
-
-    // Jaipur
-    "Jaipur, Rajasthan, India",
-    "Jaipur Railway Station, Rajasthan, India",
-    "Jaipur Airport (JAI), Rajasthan, India",
-    "Malviya Nagar, Rajasthan, India",
-
-    // Lucknow
-    "Lucknow, Uttar Pradesh, India",
-    "Charbagh Railway Station, Uttar Pradesh, India",
-    "Hazratganj, Uttar Pradesh, India",
-
-    // Ahmedabad
-    "Ahmedabad, Gujarat, India",
-    "Ahmedabad Airport (AMD), Gujarat, India",
-    "Sabarmati, Gujarat, India",
-    "Maninagar, Gujarat, India",
-
-    // Bhopal & Central India
-    "Bhopal, Madhya Pradesh, India",
-    "Habibganj Railway Station, Madhya Pradesh, India",
-    "Indore, Madhya Pradesh, India",
-    "Raipur, Chhattisgarh, India",
-    "Nagpur, Maharashtra, India",
-    "Jabalpur, Madhya Pradesh, India",
-
-    // North East India
-    "Guwahati, Assam, India",
-    "Dispur, Assam, India",
-    "Shillong, Meghalaya, India",
-    "Agartala, Tripura, India",
-    "Kohima, Nagaland, India",
-
-    // Hill Stations
-    "Shimla, Himachal Pradesh, India",
-    "Manali, Himachal Pradesh, India",
-    "Dharamshala, Himachal Pradesh, India",
-    "Nainital, Uttarakhand, India",
-    "Mussoorie, Uttarakhand, India",
-    "Ooty, Tamil Nadu, India",
-    "Munnar, Kerala, India",
-    "Darjeeling, West Bengal, India",
-    "Gangtok, Sikkim, India",
-
-    // Goa
-    "Goa, Goa, India",
-    "Panaji, Goa, India",
-    "Vasco da Gama, Goa, India",
-    "Madgaon Railway Station, Goa, India",
-
-    // Other major cities
-    "Varanasi, Uttar Pradesh, India",
-    "Patna, Bihar, India",
-    "Ranchi, Jharkhand, India",
-    "Jamshedpur, Jharkhand, India",
-    "Kanpur, Uttar Pradesh, India",
-    "Agra, Uttar Pradesh, India",
-    "Amritsar, Punjab, India",
-    "Ludhiana, Punjab, India",
-    "Surat, Gujarat, India",
-    "Rajkot, Gujarat, India",
-    "Coimbatore, Tamil Nadu, India",
-    "Madurai, Tamil Nadu, India",
-    "Vijayawada, Andhra Pradesh, India",
-    "Visakhapatnam, Andhra Pradesh, India",
-    "Trivandrum, Kerala, India",
-    "Kochi, Kerala, India",
-    "Ernakulam, Kerala, India"
-  ];
+  const locations = LOCATIONS;
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -416,11 +279,15 @@ export default function RideSearchPage() {
     }
   };
 
+  const handleBookRide = (ride) => {
+    navigate(`/ride/${ride._id}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <section className="relative py-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-purple-600/10" />
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="CoGo Search Hero" className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="CommuteX Search Hero" className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             className="text-center max-w-6xl mx-auto"
@@ -435,7 +302,7 @@ export default function RideSearchPage() {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               Find Your Perfect{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CoGo</span>
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CommuteX Ride</span>
             </motion.h1>
 
             <motion.p
@@ -749,32 +616,10 @@ export default function RideSearchPage() {
                               className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => {
-                                const now = new Date();
-                                const formattedTime = now.toLocaleString("en-IN", {
-                                  weekday: "long",
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                  hour: "numeric",
-                                  minute: "numeric",
-                                  hour12: true,
-                                });
-
-                                toast("Ride Has Been Booked", {
-                                  description: `Booked on ${formattedTime}`,
-                                  action: {
-                                    label: "Read",
-                                    onClick: async () => {
-                                      // Mark ride as completed in backend
-                                      await fetch(`${API_URL}/rides/rides/${ride._id}/complete`, {
-                                        method: "PATCH",
-                                      });
-                                    },
-                                  },
-                                });
-                              }}>
-                              Book Ride
+                              disabled={ride.passengers < 1}
+                              onClick={() => handleBookRide(ride)}
+                            >
+                              {ride.passengers < 1 ? "Fully Booked" : "View Details & Book"}
                             </Button>
                             <Button
                               variant="outline"

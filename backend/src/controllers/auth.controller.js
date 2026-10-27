@@ -32,13 +32,16 @@ const createSendToken = (user, statusCode, res, message = 'Success') => {
       id: user._id, 
       name: user.name, 
       email: user.email,
+      phone: user.phone || '',
+      bio: user.bio || '',
+      role: user.role || 'passenger',
       createdAt: user.createdAt
     }
   });
 };
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
@@ -50,7 +53,13 @@ export const registerUser = asyncHandler(async (req, res) => {
   }
 
   // Create new user
-  const newUser = await User.create({ name, email, password });
+  const newUser = await User.create({ 
+    name, 
+    email, 
+    password,
+    phone: phone || '',
+    role: 'passenger'
+  });
 
   createSendToken(newUser, 201, res, 'User registered successfully');
 });
@@ -144,5 +153,36 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Password reset functionality will be implemented soon'
+  });
+});
+
+export const updateUserProfile = asyncHandler(async (req, res) => {
+  const { name, phone, bio } = req.body;
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  if (name) user.name = name.trim();
+  if (phone !== undefined) user.phone = phone.trim();
+  if (bio !== undefined) user.bio = bio.trim();
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile updated successfully',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      bio: user.bio,
+      role: user.role || 'passenger'
+    }
   });
 });

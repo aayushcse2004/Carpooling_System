@@ -14,6 +14,8 @@ import passport from 'passport';
 import connectDB from './src/config/db.js';
 import authRoutes from './src/routes/auth.route.js';
 import contactRoutes from './src/routes/contact.route.js';
+import confirmRideRoutes from './src/routes/confirm-ride.route.js';
+import bookingRoutes from './src/routes/booking.route.js';
 
 // Get current directory in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -51,10 +53,10 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Stricter rate limiting for auth routes
+// Stricter rate limiting for auth routes (more permissive in development)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 10 : 100, // 10 in prod, 100 in dev
   message: 'Too many authentication attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -106,23 +108,25 @@ app.use(passport.session());
 
 // Apply auth rate limiting to authentication routes
 app.use('/api/auth', authLimiter);
-app.use('/api/driver', DriverRoutes);
-app.use('/api/rides', rideRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/driver', DriverRoutes);
+app.use('/api/Driver', DriverRoutes); // Case-insensitive alias
+app.use('/api/rides', rideRoutes);
+app.use('/api/ride', rideRoutes); // Alias for single ride queries
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/contact', contactRoutes);
-
-import confirmRideRoutes from './src/routes/confirm-ride.route.js';
 app.use('/api/confirm-ride', confirmRideRoutes);
 
 // Root route - API health check
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'RideSphere API is running',
-    version: '1.0.0',
+    message: 'CommuteX Carpooling API is running',
+    version: '2.0.0',
     endpoints: {
       auth: '/api/auth',
       rides: '/api/rides',
+      bookings: '/api/bookings',
       driver: '/api/driver',
       contact: '/api/contact',
       confirmRide: '/api/confirm-ride'

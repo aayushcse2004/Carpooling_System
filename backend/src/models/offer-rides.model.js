@@ -43,7 +43,7 @@ const rideSchema = new mongoose.Schema(
     confirmedRiders: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Rider',
+        ref: 'User',
       },
     ],
     completed: {

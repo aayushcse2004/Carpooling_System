@@ -1,44 +1,46 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock, Users, Star } from 'lucide-react';
 
 const LiveRides = () => {
+  const navigate = useNavigate();
   const rides = [
     {
       id: 1,
-      from: 'Downtown',
-      to: 'Airport',
-      driver: 'Sarah M.',
+      from: 'Chandigarh',
+      to: 'New Delhi',
+      driver: 'Rajesh S.',
       rating: 4.9,
-      seatsLeft: 2,
-      time: '2:30 PM',
-      price: '$15',
+      seatsLeft: 3,
+      time: '07:30 AM',
+      price: '₹450',
       transport: '🚗',
       verified: true
     },
     {
       id: 2,
-      from: 'Tech Park',
-      to: 'Mall District',
-      driver: 'Mike R.',
+      from: 'Noida Sector 62',
+      to: 'Cyber Hub, Gurgaon',
+      driver: 'Pooja V.',
       rating: 4.8,
-      seatsLeft: 1,
-      time: '3:15 PM',
-      price: '$8',
-      transport: '🏍️',
+      seatsLeft: 2,
+      time: '08:15 AM',
+      price: '₹120',
+      transport: '🚗',
       verified: true
     },
     {
       id: 3,
-      from: 'University',
-      to: 'City Center',
-      driver: 'Lisa K.',
+      from: 'Electronic City',
+      to: 'Whitefield, Bengaluru',
+      driver: 'Kiran M.',
       rating: 5.0,
-      seatsLeft: 3,
-      time: '4:00 PM',
-      price: '$12',
+      seatsLeft: 2,
+      time: '09:00 AM',
+      price: '₹150',
       transport: '🚗',
       verified: true
     }
@@ -178,8 +180,9 @@ const LiveRides = () => {
                   <Button
                     size="sm"
                     className="w-full bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-500 hover:to-purple-600 text-white"
+                    onClick={() => navigate('/rides')}
                   >
-                    Join Ride
+                    Find Rides
                   </Button>
                 </Card>
               </motion.div>
@@ -192,7 +195,11 @@ const LiveRides = () => {
               transition={{ duration: 0.8, delay: 0.5 }}
               viewport={{ once: true }}
             >
-              <Button variant="outline" className="border-cyan-400/50 text-cyan-400 hover:bg-cyan-400 hover:text-black">
+              <Button 
+                variant="outline" 
+                className="border-cyan-400/50 text-cyan-400 hover:bg-cyan-400 hover:text-black"
+                onClick={() => navigate('/rides')}
+              >
                 View All Rides
               </Button>
             </motion.div>

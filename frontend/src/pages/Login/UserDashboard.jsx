@@ -1,707 +1,664 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import Logo from "@/components/ui/Logo";
+import { clearSession, getAuthHeaders, getCurrentUser } from "@/utils/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 import {
   LayoutDashboard,
-  BookOpen,
+  Search,
   Car,
   Bell,
   User,
   LogOut,
   Menu,
-  TrendingUp,
   Clock,
   CheckCircle,
   AlertTriangle,
-  Info,
   Wallet,
   XCircle,
-  Eye,
-  MoreVertical,
   Navigation,
   MapPin,
   Calendar,
   Users,
-  DollarSign,
+  Phone,
+  Mail,
+  RefreshCw,
+  Loader2,
+  ShieldCheck,
+  ChevronRight,
+  X,
 } from "lucide-react";
-
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4 },
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
 
 export default function UserDashboard() {
   const navigate = useNavigate();
 
-  // User profile state
+  // Active section: 'dashboard' | 'my-bookings' | 'profile'
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // User profile
   const [userProfile, setUserProfile] = useState({
     name: "",
     email: "",
     phone: "",
-    gender: "",
+    bio: "",
   });
+  const [profileSaving, setProfileSaving] = useState(false);
 
-  // Booked rides state
+  // Real Booked Rides
   const [bookedRides, setBookedRides] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showAllRides, setShowAllRides] = useState(false);
-  const [viewRide, setViewRide] = useState(null);
-  const [showViewModal, setShowViewModal] = useState(false);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState("all");
 
-  // Notifications
-  const [notifications, setNotifications] = useState([]);
-
-  // Sidebar
-  const [activeSection, setActiveSection] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Logout function
-  const handleLogout = () => {
-    sessionStorage.removeItem("userId");
-    sessionStorage.removeItem("user");
-    navigate("/");
+  // Fetch user profile from backend
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/profile`, {
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUserProfile({
+            name: data.user.name || "",
+            email: data.user.email || "",
+            phone: data.user.phone || "",
+            bio: data.user.bio || "",
+          });
+          sessionStorage.setItem("user", JSON.stringify(data.user));
+        }
+      } else {
+        const fallback = getCurrentUser() || {};
+        setUserProfile((prev) => ({
+          ...prev,
+          name: fallback.name || "",
+          email: fallback.email || "",
+          phone: fallback.phone || "",
+          bio: fallback.bio || "",
+        }));
+      }
+    } catch (err) {
+      const fallback = getCurrentUser() || {};
+      setUserProfile((prev) => ({
+        ...prev,
+        name: fallback.name || "",
+        email: fallback.email || "",
+      }));
+    }
   };
 
-  // Sidebar items
+  // Fetch real passenger bookings
+  const fetchBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const res = await fetch(`${API_URL}/bookings/my-bookings`, {
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBookedRides(data.bookings || []);
+      } else {
+        toast.error("Failed to fetch your bookings");
+      }
+    } catch (err) {
+      toast.error("Network error fetching bookings");
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+    fetchBookings();
+  }, []);
+
+  // Cancel Booking
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/bookings/${bookingId}/cancel`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to cancel booking");
+      }
+      toast.success("Booking successfully cancelled");
+      fetchBookings();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  // Save profile changes
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/profile`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(userProfile),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update profile");
+
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+      toast.success("Profile updated successfully!");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    toast.info("Logged out successfully");
+    navigate("/role-selection");
+  };
+
+  // Stats calculations
+  const pendingCount = bookedRides.filter((b) => b.status === "pending").length;
+  const confirmedCount = bookedRides.filter((b) => b.status === "confirmed").length;
+  const totalSpent = bookedRides
+    .filter((b) => b.status === "confirmed")
+    .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "book-ride", label: "Book a Ride", icon: BookOpen },
-    { id: "my-bookings", label: "My Bookings", icon: Car },
-    { id: "notifications", label: "Notifications", icon: Bell },
+    {
+      id: "my-bookings",
+      label: "My Bookings",
+      icon: Car,
+      badge: confirmedCount > 0 ? confirmedCount : null,
+    },
     { id: "profile", label: "Profile", icon: User },
   ];
 
-  // Dashboard stats
-  const dashboardStats = [
-    {
-      title: "Total Rides Booked",
-      value: bookedRides.length.toString(),
-      change: "+2 this month",
-      icon: Car,
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
-    },
-    {
-      title: "Upcoming Rides",
-      value: bookedRides.filter(ride => !ride.completed).length.toString(),
-      change: "Awaiting travel",
-      icon: Clock,
-      color: "from-yellow-500 to-yellow-600",
-      bgColor: "bg-yellow-50",
-    },
-    {
-      title: "Completed Rides",
-      value: bookedRides.filter(ride => ride.completed).length.toString(),
-      change: "Total completed",
-      icon: CheckCircle,
-      color: "from-green-500 to-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
-      title: "Total Spent",
-      value: `₹${bookedRides.reduce((sum, ride) => sum + (ride.contribution || 0), 0)}`,
-      change: "Expected spend",
-      icon: Wallet,
-      color: "from-orange-500 to-orange-600",
-      bgColor: "bg-orange-50",
-    },
-  ];
+  const filteredBookings = bookedRides.filter((b) => {
+    if (bookingFilter === "all") return true;
+    return b.status === bookingFilter;
+  });
 
-  // Fetch user profile from backend using JWT token
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const token = sessionStorage.getItem("token");
-      if (!token) {
-        // fallback to sessionStorage user
-        const fallbackUser1 = JSON.parse(sessionStorage.getItem("user")) || {};
-        setUserProfile({
-          name: fallbackUser1.name || "",
-          email: fallbackUser1.email || "",
-          phone: fallbackUser1.phone || "",
-          gender: fallbackUser1.gender || "",
-        });
-        return;
-      }
-      try {
-        const res = await fetch(`${API_URL}/auth/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUserProfile({
-            name: data.name || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            gender: data.gender || "",
-          });
-        } else {
-          // fallback to sessionStorage user
-          const fallbackUser2 = JSON.parse(sessionStorage.getItem("user")) || {};
-          setUserProfile({
-            name: fallbackUser2.name || "",
-            email: fallbackUser2.email || "",
-            phone: fallbackUser2.phone || "",
-            gender: fallbackUser2.gender || "",
-          });
-        }
-      } catch (err) {
-        // fallback to sessionStorage user
-        const fallbackUser3 = JSON.parse(sessionStorage.getItem("user")) || {};
-        setUserProfile({
-          name: fallbackUser3.name || "",
-          email: fallbackUser3.email || "",
-          phone: fallbackUser3.phone || "",
-          gender: fallbackUser3.gender || "",
-        });
-      }
-    };
-    fetchProfile();
-  }, []);
-
-  // Fetch booked rides (replace with real API call)
-  const fetchBookedRides = async () => {
-    setLoading(true);
-    try {
-      // const userId = sessionStorage.getItem("userId");
-      // const response = await fetch(`http://localhost:5000/api/bookings/my-bookings?userId=${userId}`);
-      // const data = await response.json();
-      // setBookedRides(data);
-      // For now, use placeholder data:
-      setBookedRides([
-        {
-          _id: "1",
-          from: "Chandigarh",
-          to: "Delhi",
-          date: "2024-06-10",
-          time: "09:00",
-          passengers: 1,
-          transport: "Car",
-          contribution: 500,
-          completed: false,
-        },
-        {
-          _id: "2",
-          from: "Delhi",
-          to: "Agra",
-          date: "2024-05-20",
-          time: "14:00",
-          passengers: 2,
-          transport: "Car",
-          contribution: 800,
-          completed: true,
-        },
-      ]);
-    } catch (error) {
-      setBookedRides([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBookedRides();
-  }, []);
-
-  // Notifications (localStorage)
-  useEffect(() => {
-    const savedNotifs = localStorage.getItem('userNotifications');
-    if (savedNotifs) {
-      setNotifications(JSON.parse(savedNotifs));
-    }
-  }, []);
-  useEffect(() => {
-    localStorage.setItem('userNotifications', JSON.stringify(notifications));
-  }, [notifications]);
-
-  const markAsRead = (id) => {
-    setNotifications((prev) => {
-      const updated = prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif));
-      localStorage.setItem('userNotifications', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const getBadgeVariant = (type) => {
-    switch (type) {
-      case "success":
-        return "bg-green-100 text-green-700 border-green-200";
-      case "alert":
-        return "bg-red-100 text-red-700 border-red-200";
-      case "info":
-      default:
-        return "bg-blue-100 text-blue-700 border-blue-200";
-    }
-  };
-
-  const getBadgeIcon = (type) => {
-    switch (type) {
-      case "success":
-        return <CheckCircle className="w-3 h-3" />;
-      case "alert":
-        return <AlertTriangle className="w-3 h-3" />;
-      case "info":
-      default:
-        return <Info className="w-3 h-3" />;
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
-  const formatTime = (timeString) => {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(hours, minutes);
-    return date.toLocaleTimeString('en-IN', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const getRideStatus = (ride) => {
-    if (ride.completed) {
-      return { status: "Completed", color: "bg-green-100 text-green-700" };
-    } else {
-      return { status: "Upcoming", color: "bg-yellow-100 text-yellow-700" };
-    }
-  };
-
-  // Main content renderer
-  const renderMainContent = () => {
-    switch (activeSection) {
-      case "notifications":
-        return (
-          <div className="space-y-6 mt-16">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-slate-800">Notifications</h1>
-              <Button
-                variant="outline"
-                className="rounded-xl border-slate-200 hover:bg-slate-50 bg-transparent"
-                onClick={() => setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })))}
-              >
-                Mark All as Read
-              </Button>
-            </div>
-            <motion.div className="space-y-4" variants={staggerContainer} initial="initial" animate="animate">
-              {notifications.map((notification) => (
-                <motion.div key={notification.id} variants={fadeInUp}>
-                  <Card
-                    className={`backdrop-blur-xl border-white/50 rounded-2xl transition-all duration-300 hover:shadow-lg ${
-                      notification.read ? "bg-white/30" : "bg-white/50 border-blue-200"
-                    }`}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Badge className={`${getBadgeVariant(notification.type)} flex items-center gap-1`}>
-                              {getBadgeIcon(notification.type)}
-                              {notification.type === "success"
-                                ? "Success"
-                                : notification.type === "alert"
-                                  ? "Alert"
-                                  : "Info"}
-                            </Badge>
-                            {!notification.read && (
-                              <Badge className="bg-blue-500 text-white text-xs px-2 py-1">New</Badge>
-                            )}
-                          </div>
-                          <h3 className="text-lg font-semibold text-slate-800 mb-1">{notification.title}</h3>
-                          <p className="text-slate-600 mb-3">{notification.message}</p>
-                          <p className="text-sm text-slate-500">{notification.timestamp}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {!notification.read && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => markAsRead(notification.id)}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg"
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              Mark as Read
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" className="rounded-lg">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        );
-      case "my-bookings":
-        return (
-          <div className="space-y-6 mt-16">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-slate-800">My Bookings</h1>
-              <Button
-                onClick={fetchBookedRides}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl"
-              >
-                Refresh Bookings
-              </Button>
-            </div>
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-slate-600">Loading your bookings...</p>
-              </div>
-            ) : bookedRides.length === 0 ? (
-              <Card className="backdrop-blur-xl bg-white/40 border-white/50 rounded-2xl p-8">
-                <CardContent className="p-0 text-center">
-                  <Car className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-slate-800 mb-2">No Bookings Yet</h3>
-                  <p className="text-slate-600 mb-4">Start booking rides to travel conveniently!</p>
-                  <Button
-                    onClick={() => setActiveSection("book-ride")}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl"
-                  >
-                    Book Your First Ride
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                variants={staggerContainer}
-                initial="initial"
-                animate="animate"
-              >
-                {bookedRides
-                  .slice()
-                  .sort((a, b) => new Date(b.date) - new Date(a.date))
-                  .map((ride) => {
-                    const rideStatus = getRideStatus(ride);
-                    return (
-                      <motion.div key={ride._id} variants={fadeInUp}>
-                        <Card className="backdrop-blur-xl bg-white/40 border-white/50 rounded-2xl overflow-hidden hover:bg-white/50 transition-all duration-300 hover:shadow-lg">
-                          <CardContent className="p-6">
-                            {/* Header with Status */}
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center gap-2">
-                                <Badge className={`${rideStatus.color} text-xs px-3 py-1`}>
-                                  {rideStatus.status}
-                                </Badge>
-                                {ride.completed && (
-                                  <Badge className="bg-green-600 text-white text-xs px-2 py-1 ml-2">Completed</Badge>
-                                )}
-                              </div>
-                            </div>
-                            {/* Route Information */}
-                            <div className="space-y-3 mb-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-sm font-medium text-slate-800 truncate">
-                                  {ride.from}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <span className="text-sm font-medium text-slate-800 truncate">
-                                  {ride.to}
-                                </span>
-                              </div>
-                            </div>
-                            {/* Date and Time */}
-                            <div className="flex items-center gap-4 mb-4 text-sm text-slate-600">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                <span>{formatDate(ride.date)}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                <span>{formatTime(ride.time)}</span>
-                              </div>
-                            </div>
-                            {/* Ride Details */}
-                            <div className="grid grid-cols-3 gap-4 text-center">
-                              <div className="bg-white/50 rounded-lg p-3">
-                                <Users className="w-4 h-4 text-slate-600 mx-auto mb-1" />
-                                <p className="text-xs text-slate-600">Passengers</p>
-                                <p className="text-sm font-semibold text-slate-800">{ride.passengers}</p>
-                              </div>
-                              <div className="bg-white/50 rounded-lg p-3">
-                                <Car className="w-4 h-4 text-slate-600 mx-auto mb-1" />
-                                <p className="text-xs text-slate-600">Transport</p>
-                                <p className="text-sm font-semibold text-slate-800">{ride.transport}</p>
-                              </div>
-                              <div className="bg-white/50 rounded-lg p-3">
-                                <DollarSign className="w-4 h-4 text-slate-600 mx-auto mb-1" />
-                                <p className="text-xs text-slate-600">Per Person</p>
-                                <p className="text-sm font-semibold text-slate-800">₹{ride.contribution}</p>
-                              </div>
-                            </div>
-                            {/* Action Button */}
-                            <div className="mt-4">
-                              <Button
-                                className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg text-sm py-2"
-                                onClick={() => { setViewRide(ride); setShowViewModal(true); }}
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    );
-                  })}
-              </motion.div>
-            )}
-            {/* View Ride Modal */}
-            {showViewModal && viewRide && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-xl relative">
-                  <button className="absolute top-3 right-3 text-xl" onClick={() => setShowViewModal(false)}>&times;</button>
-                  <h2 className="text-2xl font-bold mb-4">Booking Details</h2>
-                  <div className="space-y-2">
-                    <div><strong>From:</strong> {viewRide.from}</div>
-                    <div><strong>To:</strong> {viewRide.to}</div>
-                    <div><strong>Date:</strong> {formatDate(viewRide.date)}</div>
-                    <div><strong>Time:</strong> {formatTime(viewRide.time)}</div>
-                    <div><strong>Passengers:</strong> {viewRide.passengers}</div>
-                    <div><strong>Transport:</strong> {viewRide.transport}</div>
-                    <div><strong>Contribution:</strong> ₹{viewRide.contribution}</div>
-                  </div>
-                  <div className="flex gap-2 mt-6">
-                    <Button className="flex-1" variant="outline" onClick={() => setShowViewModal(false)}>Close</Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      case "profile":
-        return (
-          <div className="space-y-6 mt-16">
-            <h1 className="text-3xl font-bold text-slate-800">Profile</h1>
-            <Card className="backdrop-blur-xl bg-white/40 border-white/50 rounded-2xl p-8">
-              <CardContent className="p-0">
-                <div className="space-y-4">
-                  <div><span className="font-medium text-slate-700">Name:</span> {userProfile.name}</div>
-                  <div><span className="font-medium text-slate-700">Email:</span> {userProfile.email}</div>
-                  <div><span className="font-medium text-slate-700">Phone:</span> {userProfile.phone}</div>
-                  <div><span className="font-medium text-slate-700">Gender:</span> {userProfile.gender}</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      default:
-        return (
-          <div className="space-y-6 mt-16">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-slate-800">User Dashboard</h1>
-              <Badge className="bg-green-100 text-green-700 border-green-200">Welcome, {userProfile.name || "User"}</Badge>
-            </div>
-            {/* Stats Cards */}
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-              variants={staggerContainer}
-              initial="initial"
-              animate="animate"
-            >
-              {dashboardStats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <motion.div key={index} variants={fadeInUp}>
-                    <Card className="backdrop-blur-xl bg-white/40 border-white/50 rounded-2xl overflow-hidden hover:bg-white/50 transition-all duration-300 group hover:shadow-lg">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
-                            <Icon className="w-6 h-6 text-slate-700" />
-                          </div>
-                          <div
-                            className={`w-8 h-8 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center`}
-                          >
-                            <TrendingUp className="w-4 h-4 text-white" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="text-2xl font-bold text-slate-800">{stat.value}</h3>
-                          <p className="text-sm font-medium text-slate-700">{stat.title}</p>
-                          <p className="text-xs text-slate-500">{stat.change}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-            {/* Booking History Table */}
-            <Card className="backdrop-blur-xl bg-white/40 border-white/50 rounded-2xl">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold text-slate-800 mb-4">Recent Bookings</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left table-auto">
-                    <thead>
-                      <tr className="text-slate-600 text-sm border-b border-slate-200/50">
-                        <th className="py-2 px-4">Pickup</th>
-                        <th className="py-2 px-4">Destination</th>
-                        <th className="py-2 px-4">Date</th>
-                        <th className="py-2 px-4">Status</th>
-                        <th className="py-2 px-4 text-right">Price</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(showAllRides
-                        ? bookedRides.slice().sort((a, b) => new Date(b.date) - new Date(a.date))
-                        : bookedRides.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
-                      ).map((ride) => {
-                        const rideStatus = getRideStatus(ride);
-                        return (
-                          <tr key={ride._id} className="border-b border-slate-200/30 last:border-b-0">
-                            <td className="py-3 px-4 text-slate-800 font-medium">{ride.from}</td>
-                            <td className="py-3 px-4 text-slate-800 font-medium">{ride.to}</td>
-                            <td className="py-3 px-4 text-slate-600 text-sm">{new Date(ride.date).toLocaleDateString()}</td>
-                            <td className="py-3 px-4">
-                              <Badge
-                                className={`text-xs px-2 py-1 ${
-                                  rideStatus.status === "Completed"
-                                    ? "bg-green-100 text-green-700 border-green-200"
-                                    : rideStatus.status === "Upcoming"
-                                    ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                                    : "bg-gray-100 text-gray-700 border-gray-200"
-                                }`}
-                              >
-                                {rideStatus.status}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4 text-right text-slate-800 font-semibold">₹{ride.contribution}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                {bookedRides.length > 5 && (
-                  <div className="text-center mt-6">
-                    <Button
-                      variant="outline"
-                      className="rounded-xl border-slate-200 hover:bg-slate-50 bg-transparent"
-                      onClick={() => setShowAllRides((prev) => !prev)}
-                    >
-                      {showAllRides ? "Hide" : "View All Bookings"}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        );
-    }
-  };
-
-  // Main return
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex">
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-xl border-r border-white/50 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row">
+      {/* Sidebar Navigation */}
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-72 bg-slate-900 border-r border-slate-800 p-6 flex flex-col justify-between transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center gap-3 p-6 border-b border-white/50">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
-              <Navigation className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">CoGo</h1>
-              <p className="text-sm text-slate-600">User Panel</p>
-            </div>
-          </div>
-          {/* Navigation */}
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.id;
-                const unreadCount = item.id === "notifications" ? notifications.filter((n) => !n.read).length : 0;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id);
-                      setSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                      isActive
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
-                        : "text-slate-700 hover:bg-white/50 hover:text-blue-600"
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                    {unreadCount > 0 && (
-                      <Badge className="bg-red-500 text-white text-xs px-2 py-1 ml-auto">{unreadCount}</Badge>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
-          {/* Logout */}
-          <div className="p-4 border-t border-white/50">
+        <div>
+          <div className="flex items-center justify-between mb-8">
+            <Logo size="md" />
             <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden text-slate-400 hover:text-white p-1"
             >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
+              <X className="w-5 h-5" />
             </button>
           </div>
-        </div>
-      </div>
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-0">
-        {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-xl border-b border-white/50">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-white/50 transition-colors">
-            <Menu className="w-6 h-6 text-slate-700" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-              <Navigation className="w-5 h-5 text-white" />
+
+          <div className="mb-6 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+                {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : "P"}
+              </div>
+              <div className="truncate">
+                <div className="text-sm font-bold text-white truncate">{userProfile.name || "Passenger"}</div>
+                <div className="text-xs text-cyan-400 font-medium truncate">Commuter</div>
+              </div>
             </div>
-            <span className="font-bold text-slate-800">CoGo User</span>
           </div>
+
+          <nav className="space-y-1.5">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveSection(item.id);
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    isActive
+                      ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500 text-slate-950 text-xs font-bold">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
-        {/* Content */}
-        <main className="p-6 lg:p-8">{renderMainContent()}</main>
-      </div>
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+
+        <div className="pt-6 border-t border-slate-800 space-y-2">
+          <Link
+            to="/rides"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+          >
+            <Search className="w-4 h-4 text-cyan-400" />
+            <span>Search New Rides</span>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 lg:p-10 max-w-7xl mx-auto w-full">
+        {/* Mobile Top Bar */}
+        <div className="lg:hidden flex items-center justify-between pb-6 mb-6 border-b border-slate-800">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <Logo size="sm" />
+          <div className="w-9" />
+        </div>
+
+        {/* SECTION: DASHBOARD OVERVIEW */}
+        {activeSection === "dashboard" && (
+          <div className="space-y-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Passenger Dashboard</h1>
+                <p className="text-slate-400 text-sm mt-1">Track your upcoming commuter trips, bookings, and expense savings</p>
+              </div>
+              <Button
+                onClick={() => navigate("/rides")}
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-cyan-500/20"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                <span>Find a Ride</span>
+              </Button>
+            </div>
+
+            {/* Dashboard Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-slate-900/90 border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-400 font-semibold uppercase">Total Bookings</div>
+                    <div className="text-2xl font-extrabold text-white mt-1">{bookedRides.length}</div>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                    <Car className="w-5 h-5" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="bg-slate-900/90 border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-400 font-semibold uppercase">Pending Approval</div>
+                    <div className="text-2xl font-extrabold text-amber-400 mt-1">{pendingCount}</div>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="bg-slate-900/90 border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-400 font-semibold uppercase">Confirmed Trips</div>
+                    <div className="text-2xl font-extrabold text-emerald-400 mt-1">{confirmedCount}</div>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="bg-slate-900/90 border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-400 font-semibold uppercase">Total Saved / Spent</div>
+                    <div className="text-2xl font-extrabold text-teal-400 mt-1">₹{totalSpent}</div>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center">
+                    <Wallet className="w-5 h-5" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Upcoming Confirmed Rides */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Your Confirmed Journeys</h2>
+                <button
+                  onClick={() => setActiveSection("my-bookings")}
+                  className="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-semibold"
+                >
+                  <span>View All Bookings</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {bookedRides.filter((b) => b.status === "confirmed").length === 0 ? (
+                <Card className="bg-slate-900/60 border-slate-800 rounded-2xl p-8 text-center">
+                  <Car className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                  <h3 className="font-bold text-white mb-1">No Confirmed Trips Yet</h3>
+                  <p className="text-xs text-slate-400 mb-4">Search available rides between 50+ cities across India</p>
+                  <Button
+                    onClick={() => navigate("/rides")}
+                    size="sm"
+                    className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold"
+                  >
+                    Browse Available Rides
+                  </Button>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {bookedRides
+                    .filter((b) => b.status === "confirmed")
+                    .slice(0, 4)
+                    .map((booking) => {
+                      const ride = booking.ride || {};
+                      const driver = booking.driver || {};
+                      return (
+                        <Card key={booking._id} className="bg-slate-900/90 border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all shadow-lg">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              Confirmed Trip
+                            </span>
+                            <span className="text-sm font-bold text-emerald-400">₹{booking.totalPrice}</span>
+                          </div>
+                          <div className="font-bold text-white text-base mb-2">
+                            {ride.from} → {ride.to}
+                          </div>
+                          <div className="text-xs text-slate-400 mb-4 space-y-1">
+                            <div>Travel Date: {ride.date} at {ride.time}</div>
+                            <div>Driver: <span className="text-white font-semibold">{driver.name || "Verified Driver"}</span> ({driver.phone ? `+91 ${driver.phone}` : "Contact provided"})</div>
+                            <div>Vehicle: <span className="font-mono text-cyan-400 uppercase">{driver.carnumber}</span></div>
+                          </div>
+                          <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                            <span className="text-slate-400">{booking.seatsBooked} seat(s) reserved</span>
+                            <Button
+                              onClick={() => handleCancelBooking(booking._id)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-rose-400 hover:bg-rose-500/10 text-xs h-7"
+                            >
+                              Cancel Booking
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* SECTION: MY BOOKINGS */}
+        {activeSection === "my-bookings" && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">My Bookings History</h1>
+                <p className="text-slate-400 text-sm mt-1">Review all your requested, confirmed, and past travel itineraries</p>
+              </div>
+              <Button
+                onClick={fetchBookings}
+                variant="outline"
+                size="sm"
+                className="border-slate-800 text-slate-300 hover:bg-slate-800"
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-2" />
+                <span>Refresh</span>
+              </Button>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              {["all", "pending", "confirmed", "rejected", "cancelled"].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setBookingFilter(filter)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                    bookingFilter === filter
+                      ? "bg-cyan-500 text-slate-950 shadow-md"
+                      : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            {loadingBookings ? (
+              <div className="text-center py-16">
+                <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-3" />
+                <p className="text-slate-400 text-sm">Loading your bookings...</p>
+              </div>
+            ) : filteredBookings.length === 0 ? (
+              <Card className="bg-slate-900/60 border-slate-800 rounded-2xl p-12 text-center">
+                <Car className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <h3 className="font-bold text-white text-base mb-1">No Bookings Found</h3>
+                <p className="text-xs text-slate-400 mb-6">
+                  {bookingFilter === "all"
+                    ? "You haven't requested any rides yet. Find your next journey today!"
+                    : `No bookings found with status '${bookingFilter}'.`}
+                </p>
+                <Button
+                  onClick={() => navigate("/rides")}
+                  className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl"
+                >
+                  Search & Book Rides
+                </Button>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {filteredBookings.map((booking) => {
+                  const ride = booking.ride || {};
+                  const driver = booking.driver || {};
+                  const isCancelable = booking.status === "pending" || booking.status === "confirmed";
+
+                  return (
+                    <Card
+                      key={booking._id}
+                      className="bg-slate-900/90 border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-all shadow-lg"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                                booking.status === "confirmed"
+                                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                  : booking.status === "pending"
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                  : booking.status === "rejected"
+                                  ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                  : "bg-slate-800 text-slate-400"
+                              }`}
+                            >
+                              {booking.status === "pending" ? "Awaiting Driver Approval" : booking.status}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              Booked on {new Date(booking.createdAt).toLocaleDateString("en-IN")}
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-bold text-white">
+                            {ride.from || "Pickup"} → {ride.to || "Dropoff"}
+                          </h3>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            Departure Date: {ride.date} at {ride.time}
+                          </div>
+                        </div>
+
+                        <div className="text-left md:text-right">
+                          <div className="text-xs text-slate-400 font-semibold uppercase">Total Contribution</div>
+                          <div className="text-2xl font-extrabold text-emerald-400">₹{booking.totalPrice}</div>
+                          <div className="text-xs text-slate-400">{booking.seatsBooked} seat(s) booked</div>
+                        </div>
+                      </div>
+
+                      {/* Driver & Route Info */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 text-xs">
+                        <div>
+                          <span className="text-slate-400 block mb-0.5">Driver Name:</span>
+                          <span className="font-bold text-white text-sm">{driver.name || "Verified Driver"}</span>
+                          {driver.carnumber && (
+                            <div className="mt-1 font-mono uppercase text-cyan-400">{driver.carnumber}</div>
+                          )}
+                        </div>
+
+                        <div>
+                          <span className="text-slate-400 block mb-0.5">Driver Contact:</span>
+                          <div className="flex items-center gap-2 text-slate-200">
+                            <Phone className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>{driver.phone ? `+91 ${driver.phone}` : "Provided upon approval"}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-400 mt-0.5">
+                            <Mail className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="truncate">{driver.email}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-slate-400 block mb-0.5">Pickup / Drop:</span>
+                          <span className="text-slate-300">
+                            {booking.pickupLocation || booking.notes || "Standard route stops"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Cancellation Action */}
+                      {isCancelable && (
+                        <div className="mt-5 pt-4 border-t border-slate-800 flex justify-end">
+                          <Button
+                            onClick={() => handleCancelBooking(booking._id)}
+                            variant="outline"
+                            className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs rounded-xl"
+                          >
+                            Cancel This Booking
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SECTION: PASSENGER PROFILE */}
+        {activeSection === "profile" && (
+          <div className="max-w-2xl">
+            <div className="mb-6">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Passenger Profile</h1>
+              <p className="text-slate-400 text-sm mt-1">Manage your account information and contact preferences</p>
+            </div>
+
+            <Card className="bg-slate-900/90 border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+              <form onSubmit={handleSaveProfile} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="prof-name" className="text-xs text-slate-300">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="prof-name"
+                    value={userProfile.name}
+                    onChange={(e) => setUserProfile((prev) => ({ ...prev, name: e.target.value }))}
+                    className="bg-slate-950/60 border-slate-800 text-white rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="prof-email" className="text-xs text-slate-300">
+                    Email Address (Read-only)
+                  </Label>
+                  <Input
+                    id="prof-email"
+                    value={userProfile.email}
+                    disabled
+                    className="bg-slate-950/30 border-slate-800/50 text-slate-500 rounded-xl cursor-not-allowed"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="prof-phone" className="text-xs text-slate-300">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="prof-phone"
+                    value={userProfile.phone}
+                    onChange={(e) => setUserProfile((prev) => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. 9876543210"
+                    className="bg-slate-950/60 border-slate-800 text-white rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="prof-bio" className="text-xs text-slate-300">
+                    Bio / Commute Notes
+                  </Label>
+                  <textarea
+                    id="prof-bio"
+                    rows={3}
+                    value={userProfile.bio}
+                    onChange={(e) => setUserProfile((prev) => ({ ...prev, bio: e.target.value }))}
+                    placeholder="e.g. Daily commuter between Delhi and Gurgaon. Quiet passenger with light backpack."
+                    className="w-full px-3.5 py-2.5 bg-slate-950/60 border border-slate-800 text-white rounded-xl text-sm"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl py-2.5 mt-2"
+                >
+                  {profileSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      <span>Saving Profile...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </Button>
+              </form>
+            </Card>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

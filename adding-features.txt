@@ -1,0 +1,17 @@
+AI ride matching
+Carpooling (multiple passengers)
+Route optimization
+Split fare calculation
+SOS emergency button
+In-app chat
+Push notifications
+Email verification
+Wallet/payment integration
+Driver verification
+Admin analytics dashboard
+Carbon footprint tracker
+Dark mode
+Progressive Web App (PWA)
+Docker support
+CI/CD pipeline
+Unit and integration tests

@@ -1,7 +1,5 @@
-// src/App.jsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, useEffect } from 'react';
-import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import Navbar from './components/layout/Navbar';
@@ -21,7 +19,8 @@ const RoleSelection = lazy(() => import('./pages/Login/Role-Selection'));
 const RiderDashboard = lazy(() => import('./pages/Login/DriverDashboard'));
 const UserDashboard = lazy(() => import('./pages/Login/UserDashboard'));
 const PublishRide = lazy(() => import('./pages/OfferRidePage'));
-const BookRide = lazy(() => import('./pages/BookRidePage'));
+const RideDetailsPage = lazy(() => import('./pages/RideDetailsPage'));
+import ProtectedRoute from './components/ProtectedRoute';
 
 // 404 Not Found Component
 const NotFound = () => (
@@ -59,7 +58,8 @@ const App = () => {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/rides" element={<RidesPage />} />
-              <Route path="/book-ride/:id" element={<BookRide />} />
+              <Route path="/ride/:id" element={<RideDetailsPage />} />
+              <Route path="/book-ride/:id" element={<RideDetailsPage />} />
               
               {/* Auth Routes */}
               <Route path="/role-selection" element={<RoleSelection />} />
@@ -68,10 +68,31 @@ const App = () => {
               <Route path="/driver-register" element={<DriverRegister />} />
               <Route path="/driver-login" element={<DriverLogin />} />
               
-              {/* Dashboard Routes */}
-              <Route path="/rider-dashboard" element={<RiderDashboard />} />
-              <Route path="/rider-dashboard/offer-ride" element={<PublishRide />} />
-              <Route path="/user-dashboard" element={<UserDashboard />} />
+              {/* Protected Dashboard Routes */}
+              <Route
+                path="/rider-dashboard"
+                element={
+                  <ProtectedRoute requiredRole="driver">
+                    <RiderDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/rider-dashboard/offer-ride"
+                element={
+                  <ProtectedRoute requiredRole="driver">
+                    <PublishRide />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/user-dashboard"
+                element={
+                  <ProtectedRoute requiredRole="passenger">
+                    <UserDashboard />
+                  </ProtectedRoute>
+                }
+              />
               
               {/* Legacy route redirects */}
               <Route path="/About" element={<Navigate to="/about" replace />} />
@@ -91,19 +112,6 @@ const App = () => {
         </main>
         
         <Footer />
-        
-        {/* Toast notifications */}
-        <Toaster 
-          position="top-right" 
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: 'white',
-              color: 'black',
-              border: '1px solid #e5e7eb',
-            },
-          }}
-        />
       </div>
     </ErrorBoundary>
   );

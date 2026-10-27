@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const driverSchema = new mongoose.Schema({
@@ -32,6 +32,16 @@ const driverSchema = new mongoose.Schema({
   gender: {
     type: String,
     required: true
+  },
+  bio: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  vehicleModel: {
+    type: String,
+    trim: true,
+    default: ''
   }
 }, { timestamps: true });
 

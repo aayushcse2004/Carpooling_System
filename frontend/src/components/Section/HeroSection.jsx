@@ -17,158 +17,18 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover';
-import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import LOCATIONS from '@/constants/locations';
 
 const HeroSection = () => {
-  const locationOptions = [
-  // Chandigarh & Tricity
-  "Chandigarh, Chandigarh, India",
-  "Chandigarh Airport, Chandigarh, India",
-  "Chandigarh Railway Station, Chandigarh, India",
-  "Sector 17, Chandigarh, India",
-  "Sector 43, Chandigarh, India",
-  "Panchkula, Haryana, India",
-  "Mohali, Punjab, India",
-  "Zirakpur, Punjab, India",
-  "Manimajra, Chandigarh, India",
-  "IT Park, Chandigarh, India",
+  const locationOptions = LOCATIONS;
+  const [fromSuggestions, setFromSuggestions] = useState([]);
+  const [toSuggestions, setToSuggestions] = useState([]);
+  const navigate = useNavigate();
 
-  // Delhi NCR
-  "New Delhi, Delhi, India",
-  "Old Delhi, Delhi, India",
-  "Delhi Airport (IGI), Delhi, India",
-  "Delhi Railway Station, Delhi, India",
-  "Connaught Place, Delhi, India",
-  "Saket, Delhi, India",
-  "Noida, Uttar Pradesh, India",
-  "Greater Noida, Uttar Pradesh, India",
-  "Gurgaon, Haryana, India",
-  "Faridabad, Haryana, India",
-  "Ghaziabad, Uttar Pradesh, India",
-
-  // Mumbai Metropolitan Region
-  "Mumbai, Maharashtra, India",
-  "Mumbai Airport (BOM), Maharashtra, India",
-  "Mumbai Central Railway Station, Maharashtra, India",
-  "Andheri, Maharashtra, India",
-  "Bandra, Maharashtra, India",
-  "Borivali, Maharashtra, India",
-  "Navi Mumbai, Maharashtra, India",
-  "Thane, Maharashtra, India",
-
-  // Bangalore
-  "Bengaluru, Karnataka, India",
-  "Bangalore Airport (BLR), Karnataka, India",
-  "Majestic Bus Stand, Karnataka, India",
-  "KR Puram, Karnataka, India",
-  "Electronic City, Karnataka, India",
-  "Whitefield, Karnataka, India",
-
-  // Hyderabad
-  "Hyderabad, Telangana, India",
-  "Hyderabad Airport (RGIA), Telangana, India",
-  "Secunderabad, Telangana, India",
-  "Gachibowli, Telangana, India",
-  "Hitech City, Telangana, India",
-
-  // Kolkata
-  "Kolkata, West Bengal, India",
-  "Howrah Railway Station, West Bengal, India",
-  "Sealdah Railway Station, West Bengal, India",
-  "Kolkata Airport (CCU), West Bengal, India",
-  "Salt Lake City, West Bengal, India",
-
-  // Chennai
-  "Chennai, Tamil Nadu, India",
-  "Chennai Airport (MAA), Tamil Nadu, India",
-  "Chennai Central Railway Station, Tamil Nadu, India",
-  "T Nagar, Tamil Nadu, India",
-  "Velachery, Tamil Nadu, India",
-
-  // Pune
-  "Pune, Maharashtra, India",
-  "Shivajinagar, Maharashtra, India",
-  "Pune Railway Station, Maharashtra, India",
-  "Hinjewadi, Maharashtra, India",
-  "Kothrud, Maharashtra, India",
-
-  // Jaipur
-  "Jaipur, Rajasthan, India",
-  "Jaipur Railway Station, Rajasthan, India",
-  "Jaipur Airport (JAI), Rajasthan, India",
-  "Malviya Nagar, Rajasthan, India",
-
-  // Lucknow
-  "Lucknow, Uttar Pradesh, India",
-  "Charbagh Railway Station, Uttar Pradesh, India",
-  "Hazratganj, Uttar Pradesh, India",
-
-  // Ahmedabad
-  "Ahmedabad, Gujarat, India",
-  "Ahmedabad Airport (AMD), Gujarat, India",
-  "Sabarmati, Gujarat, India",
-  "Maninagar, Gujarat, India",
-
-  // Bhopal & Central India
-  "Bhopal, Madhya Pradesh, India",
-  "Habibganj Railway Station, Madhya Pradesh, India",
-  "Indore, Madhya Pradesh, India",
-  "Raipur, Chhattisgarh, India",
-  "Nagpur, Maharashtra, India",
-  "Jabalpur, Madhya Pradesh, India",
-
-  // North East India
-  "Guwahati, Assam, India",
-  "Dispur, Assam, India",
-  "Shillong, Meghalaya, India",
-  "Agartala, Tripura, India",
-  "Kohima, Nagaland, India",
-
-  // Hill Stations
-  "Shimla, Himachal Pradesh, India",
-  "Manali, Himachal Pradesh, India",
-  "Dharamshala, Himachal Pradesh, India",
-  "Nainital, Uttarakhand, India",
-  "Mussoorie, Uttarakhand, India",
-  "Ooty, Tamil Nadu, India",
-  "Munnar, Kerala, India",
-  "Darjeeling, West Bengal, India",
-  "Gangtok, Sikkim, India",
-
-  // Goa
-  "Goa, Goa, India",
-  "Panaji, Goa, India",
-  "Vasco da Gama, Goa, India",
-  "Madgaon Railway Station, Goa, India",
-
-  // Other major cities
-  "Varanasi, Uttar Pradesh, India",
-  "Patna, Bihar, India",
-  "Ranchi, Jharkhand, India",
-  "Jamshedpur, Jharkhand, India",
-  "Kanpur, Uttar Pradesh, India",
-  "Agra, Uttar Pradesh, India",
-  "Amritsar, Punjab, India",
-  "Ludhiana, Punjab, India",
-  "Surat, Gujarat, India",
-  "Rajkot, Gujarat, India",
-  "Coimbatore, Tamil Nadu, India",
-  "Madurai, Tamil Nadu, India",
-  "Vijayawada, Andhra Pradesh, India",
-  "Visakhapatnam, Andhra Pradesh, India",
-  "Trivandrum, Kerala, India",
-  "Kochi, Kerala, India",
-  "Ernakulam, Kerala, India"
-];
-
-const [fromSuggestions, setFromSuggestions] = useState([]);
-const [toSuggestions, setToSuggestions] = useState([]);
-const navigate = useNavigate();
-
-const handleOfferRide = () => {
-    navigate("/OfferRide"); // ✅ Replace with your actual route
+  const handleOfferRide = () => {
+    navigate("/rider-dashboard/offer-ride");
   };
 
 const handleFromChange = (value) => {

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { redirect } from "react-router-dom";
+import LOCATIONS from "@/constants/locations";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -34,7 +35,7 @@ const staggerContainer = {
   },
 };
 
-export default function OfferRidePage() {
+export default function OfferRidePage({ onRidePublished }) {
   const [fromLocation, setFromLocation] = useState("");
   const navigate = useNavigate();
   const [toLocation, setToLocation] = useState("");
@@ -42,155 +43,9 @@ export default function OfferRidePage() {
   const [toSuggestions, setToSuggestions] = useState([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [modeOfTransport, setModeOfTransport] = useState("Car"); // default value
-  // Example: Assume driverId is available from context or session
-  // const driverId = sessionStorage.getItem("driverId"); // Ya context se lo
+  const [modeOfTransport, setModeOfTransport] = useState("Car");
 
-
-
-
-
-  const locationOptions = [
-    // Chandigarh & Tricity
-    "Chandigarh, Chandigarh, India",
-    "Chandigarh Airport, Chandigarh, India",
-    "Chandigarh Railway Station, Chandigarh, India",
-    "Sector 17, Chandigarh, India",
-    "Sector 43, Chandigarh, India",
-    "Panchkula, Haryana, India",
-    "Mohali, Punjab, India",
-    "Zirakpur, Punjab, India",
-    "Manimajra, Chandigarh, India",
-    "IT Park, Chandigarh, India",
-
-    // Delhi NCR
-    "New Delhi, Delhi, India",
-    "Old Delhi, Delhi, India",
-    "Delhi Airport (IGI), Delhi, India",
-    "Delhi Railway Station, Delhi, India",
-    "Connaught Place, Delhi, India",
-    "Saket, Delhi, India",
-    "Noida, Uttar Pradesh, India",
-    "Greater Noida, Uttar Pradesh, India",
-    "Gurgaon, Haryana, India",
-    "Faridabad, Haryana, India",
-    "Ghaziabad, Uttar Pradesh, India",
-
-    // Mumbai Metropolitan Region
-    "Mumbai, Maharashtra, India",
-    "Mumbai Airport (BOM), Maharashtra, India",
-    "Mumbai Central Railway Station, Maharashtra, India",
-    "Andheri, Maharashtra, India",
-    "Bandra, Maharashtra, India",
-    "Borivali, Maharashtra, India",
-    "Navi Mumbai, Maharashtra, India",
-    "Thane, Maharashtra, India",
-
-    // Bangalore
-    "Bengaluru, Karnataka, India",
-    "Bangalore Airport (BLR), Karnataka, India",
-    "Majestic Bus Stand, Karnataka, India",
-    "KR Puram, Karnataka, India",
-    "Electronic City, Karnataka, India",
-    "Whitefield, Karnataka, India",
-
-    // Hyderabad
-    "Hyderabad, Telangana, India",
-    "Hyderabad Airport (RGIA), Telangana, India",
-    "Secunderabad, Telangana, India",
-    "Gachibowli, Telangana, India",
-    "Hitech City, Telangana, India",
-
-    // Kolkata
-    "Kolkata, West Bengal, India",
-    "Howrah Railway Station, West Bengal, India",
-    "Sealdah Railway Station, West Bengal, India",
-    "Kolkata Airport (CCU), West Bengal, India",
-    "Salt Lake City, West Bengal, India",
-
-    // Chennai
-    "Chennai, Tamil Nadu, India",
-    "Chennai Airport (MAA), Tamil Nadu, India",
-    "Chennai Central Railway Station, Tamil Nadu, India",
-    "T Nagar, Tamil Nadu, India",
-    "Velachery, Tamil Nadu, India",
-
-    // Pune
-    "Pune, Maharashtra, India",
-    "Shivajinagar, Maharashtra, India",
-    "Pune Railway Station, Maharashtra, India",
-    "Hinjewadi, Maharashtra, India",
-    "Kothrud, Maharashtra, India",
-
-    // Jaipur
-    "Jaipur, Rajasthan, India",
-    "Jaipur Railway Station, Rajasthan, India",
-    "Jaipur Airport (JAI), Rajasthan, India",
-    "Malviya Nagar, Rajasthan, India",
-
-    // Lucknow
-    "Lucknow, Uttar Pradesh, India",
-    "Charbagh Railway Station, Uttar Pradesh, India",
-    "Hazratganj, Uttar Pradesh, India",
-
-    // Ahmedabad
-    "Ahmedabad, Gujarat, India",
-    "Ahmedabad Airport (AMD), Gujarat, India",
-    "Sabarmati, Gujarat, India",
-    "Maninagar, Gujarat, India",
-
-    // Bhopal & Central India
-    "Bhopal, Madhya Pradesh, India",
-    "Habibganj Railway Station, Madhya Pradesh, India",
-    "Indore, Madhya Pradesh, India",
-    "Raipur, Chhattisgarh, India",
-    "Nagpur, Maharashtra, India",
-    "Jabalpur, Madhya Pradesh, India",
-
-    // North East India
-    "Guwahati, Assam, India",
-    "Dispur, Assam, India",
-    "Shillong, Meghalaya, India",
-    "Agartala, Tripura, India",
-    "Kohima, Nagaland, India",
-
-    // Hill Stations
-    "Shimla, Himachal Pradesh, India",
-    "Manali, Himachal Pradesh, India",
-    "Dharamshala, Himachal Pradesh, India",
-    "Nainital, Uttarakhand, India",
-    "Mussoorie, Uttarakhand, India",
-    "Ooty, Tamil Nadu, India",
-    "Munnar, Kerala, India",
-    "Darjeeling, West Bengal, India",
-    "Gangtok, Sikkim, India",
-
-    // Goa
-    "Goa, Goa, India",
-    "Panaji, Goa, India",
-    "Vasco da Gama, Goa, India",
-    "Madgaon Railway Station, Goa, India",
-
-    // Other major cities
-    "Varanasi, Uttar Pradesh, India",
-    "Patna, Bihar, India",
-    "Ranchi, Jharkhand, India",
-    "Jamshedpur, Jharkhand, India",
-    "Kanpur, Uttar Pradesh, India",
-    "Agra, Uttar Pradesh, India",
-    "Amritsar, Punjab, India",
-    "Ludhiana, Punjab, India",
-    "Surat, Gujarat, India",
-    "Rajkot, Gujarat, India",
-    "Coimbatore, Tamil Nadu, India",
-    "Madurai, Tamil Nadu, India",
-    "Vijayawada, Andhra Pradesh, India",
-    "Visakhapatnam, Andhra Pradesh, India",
-    "Trivandrum, Kerala, India",
-    "Kochi, Kerala, India",
-    "Ernakulam, Kerala, India"
-  ];
-
+  const locationOptions = LOCATIONS;
 
   const handleFromChange = (value) => {
     setFromLocation(value);
@@ -223,20 +78,24 @@ export default function OfferRidePage() {
   const handleSubmit = async () => {
     const driverId = sessionStorage.getItem("driverId");
     if (!driverId) {
-      alert("Driver ID not found. Please log in as a driver.");
+      toast.error("Driver ID not found. Please log in as a driver.");
       return;
     }
+    if (!fromLocation || !toLocation || !date || !time) {
+      toast.error("Please fill in origin, destination, date, and departure time.");
+      return;
+    }
+
     const rideData = {
       from: fromLocation,
       to: toLocation,
       date,
       time,
       transport: modeOfTransport,
-      passengers,
-      contribution,
-      driver: driverId, // 👈 driverId add karo
+      passengers: parseInt(passengers, 10) || 1,
+      contribution: parseFloat(contribution) || 0,
+      driver: driverId,
     };
-
 
     try {
       const response = await fetch(`${API_URL}/rides/offer-ride`, {
@@ -249,17 +108,20 @@ export default function OfferRidePage() {
 
       const result = await response.json();
       if (response.ok) {
-        alert("Ride published successfully!");
+        toast.success("Ride published successfully! Commuters can now book seats on your route.");
+        if (onRidePublished) {
+          onRidePublished();
+        } else {
+          navigate("/rider-dashboard");
+        }
       } else {
-        alert("Failed to publish ride: " + result.message);
+        toast.error("Failed to publish ride: " + (result.message || "Unknown error"));
       }
     } catch (error) {
-      alert("Something went wrong!");
+      toast.error("Something went wrong while publishing the ride");
     }
   };
 
-  const [from, setFrom] = useState("Delhi");
-  const [to, setTo] = useState("Jaipur");
   const [passengers, setPassengers] = useState(2);
   const [contribution, setContribution] = useState(200);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);

@@ -10,40 +10,40 @@ const Testimonials = () => {
   const testimonials = [
     {
       id: 1,
-      name: 'Sarah Chen',
-      role: 'Marketing Manager',
+      name: 'Sneha Sharma',
+      role: 'Product Lead',
       avatar: '👩‍💼',
       rating: 5,
-      text: "CoGo completely transformed my daily commute. The app is intuitive, drivers are professional, and I've saved so much money while making new connections!",
-      location: 'San Francisco'
+      text: "CommuteX completely transformed my daily commute between Gurgaon and Delhi. Drivers are verified professionals, and I've cut my travel expenses by over 60%!",
+      location: 'Delhi NCR'
     },
     {
       id: 2,
-      name: 'Marcus Johnson',
+      name: 'Rohan Mehra',
       role: 'Software Engineer',
       avatar: '👨‍💻',
       rating: 5,
-      text: "As a developer, I appreciate the seamless user experience. The real-time tracking and secure payments make this the best carpooling platform I've used.",
-      location: 'Austin'
+      text: "As an IT professional in Whitefield, the route visualization and instant seat requests make CommuteX the smoothest carpooling platform in India.",
+      location: 'Bengaluru'
     },
     {
       id: 3,
-      name: 'Elena Rodriguez',
-      role: 'Environmental Scientist',
+      name: 'Ananya Verma',
+      role: 'Environmental Consultant',
       avatar: '👩‍🔬',
       rating: 5,
-      text: "Finally, a platform that aligns with my values! CoGo makes it easy to reduce my carbon footprint while meeting like-minded people.",
-      location: 'Portland'
+      text: "Finally, a platform that aligns with sustainability! CommuteX makes it effortless to reduce carbon emissions while sharing rides with verified peers.",
+      location: 'Chandigarh'
     },
     {
       id: 4,
-      name: 'David Kim',
-      role: 'Graphic Designer',
+      name: 'David DSouza',
+      role: 'Creative Director',
       avatar: '👨‍🎨',
       rating: 5,
-      text: "The design is absolutely gorgeous! But more importantly, the service is reliable and has made my daily trips so much more enjoyable.",
-      location: 'Seattle'
-    }
+      text: "The interface is sleek and responsive! Reliable cost-sharing between Mumbai and Pune has made my weekly client trips enjoyable and stress-free.",
+      location: 'Mumbai'
+    },
   ];
 
   const nextTestimonial = () => {

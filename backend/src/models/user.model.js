@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema({
@@ -24,7 +24,22 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true // Allows multiple null values for this field
-},
+  },
+  phone: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  bio: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  role: {
+    type: String,
+    enum: ['passenger', 'driver', 'admin'],
+    default: 'passenger'
+  }
 }, { timestamps: true });
 
 // Hash password before save
@@ -46,7 +61,11 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Generate JWT token
 userSchema.methods.generateAuthToken = function () {
-  return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign(
+    { _id: this._id, email: this.email, role: this.role || 'passenger' },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  );
 };
 
 const User = mongoose.model('User', userSchema);

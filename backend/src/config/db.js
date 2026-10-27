@@ -1,23 +1,20 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-dotenv.config();   // ← YOU MISSED THIS
+dotenv.config();
 
 const connectDB = async () => {
   try {
-
-    console.log("URI:", process.env.MONGO_URI); // temporary debug
-
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
+    const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/carpooling";
+    const conn = await mongoose.connect(mongoUri, {
       family: 4, // Force IPv4
       serverSelectionTimeoutMS: 5000
     });
 
-    console.log(`Mongo Connected: ${conn.connection.host}`);
-
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
-    console.error(err);
-    process.exit(1);
+    console.error(`⚠️ MongoDB Connection Error: ${err.message}`);
+    console.error(`Please verify that MongoDB is running and MONGO_URI in backend/.env is reachable.`);
   }
 };
 

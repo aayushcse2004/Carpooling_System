@@ -41,13 +41,62 @@ if (!isMatch) {
 
 const token = driver.generateAuthToken();
 
-res.status(200).json({
-  message: 'Login successful',
-  token,
-  driver: { _id: driver._id, name: driver.name, email: driver.email, carnumber: driver.carnumber, phone: driver.phone, gender: driver.gender }
-});
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      driver: { _id: driver._id, name: driver.name, email: driver.email, carnumber: driver.carnumber, phone: driver.phone, gender: driver.gender, bio: driver.bio || '', vehicleModel: driver.vehicleModel || '' }
+    });
   } catch (error) {
     console.error('Server error during Driver login:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getDriverProfile = async (req, res) => {
+  try {
+    const driver = await Driver.findById(req.user._id).select('-password');
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+    res.status(200).json({ success: true, driver });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const updateDriverProfile = async (req, res) => {
+  try {
+    const { name, phone, carnumber, bio, vehicleModel, gender } = req.body;
+    const driver = await Driver.findById(req.user._id);
+
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    if (name) driver.name = name.trim();
+    if (phone) driver.phone = phone;
+    if (carnumber) driver.carnumber = carnumber.trim();
+    if (bio !== undefined) driver.bio = bio.trim();
+    if (vehicleModel !== undefined) driver.vehicleModel = vehicleModel.trim();
+    if (gender) driver.gender = gender;
+
+    await driver.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Driver profile updated successfully',
+      driver: {
+        _id: driver._id,
+        name: driver.name,
+        email: driver.email,
+        carnumber: driver.carnumber,
+        phone: driver.phone,
+        gender: driver.gender,
+        bio: driver.bio,
+        vehicleModel: driver.vehicleModel
+      }
+    });
+  } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

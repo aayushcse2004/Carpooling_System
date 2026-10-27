@@ -67,27 +67,27 @@ export default function About() {
   const team = [
     {
       name: "Arjun Mehta",
-      role: "CEO & Co-Founder",
-      bio: "Urban mobility expert passionate about sustainable commuting.",
-      avatar: "/assets/team-arjun.jpg", // Replace with real image
+      role: "Product Lead",
+      bio: "Urban mobility specialist passionate about sustainable commuting.",
+      avatar: "",
     },
     {
       name: "Priya Sharma",
-      role: "CTO & Co-Founder",
-      bio: "Tech innovator with a vision for smarter, safer carpooling.",
-      avatar: "/assets/team-priya.jpg", // Replace with real image
+      role: "Engineering Lead",
+      bio: "Architecting reliable, accessible shared ride systems.",
+      avatar: "",
     },
     {
       name: "Rajesh Kumar",
-      role: "Head of Operations",
-      bio: "Logistics specialist ensuring smooth rides for all.",
-      avatar: "/assets/team-rajesh.jpg", // Replace with real image
+      role: "Operations Manager",
+      bio: "Ensuring community safety and responsive trip support.",
+      avatar: "",
     },
     {
       name: "Sneha Patel",
-      role: "Head of Design",
-      bio: "UX designer making carpooling delightful and easy to use.",
-      avatar: "/assets/team-sneha.jpg", // Replace with real image
+      role: "Product Designer",
+      bio: "Creating delightful and frictionless commuter experiences.",
+      avatar: "",
     },
   ];
 
@@ -110,7 +110,7 @@ export default function About() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Welcome to <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CoGo</span>
+              Welcome to <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CommuteX</span>
             </motion.h1>
 
             <motion.p
@@ -119,7 +119,7 @@ export default function About() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              CoGo is your trusted platform for sharing rides, saving money, and making commuting eco-friendly. Join a growing community of commuters making a difference—one shared ride at a time.
+              CommuteX is your trusted platform for sharing rides, saving money, and making commuting eco-friendly. Join a growing community of commuters making a difference—one shared ride at a time.
             </motion.p>
           </motion.div>
         </div>

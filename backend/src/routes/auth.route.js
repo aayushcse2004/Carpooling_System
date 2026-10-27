@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
-import { registerUser, loginUser, getUserProfile } from '../controllers/auth.controller.js';
+import { registerUser, loginUser, getUserProfile, updateUserProfile } from '../controllers/auth.controller.js';
 import protect from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -25,7 +25,7 @@ router.get('/google/callback',
 
 // Function to generate JWT
 function generateJwt(user, expiresIn = '1d') {
-  return jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn });
+  return jwt.sign({ _id: user._id, email: user.email, role: 'passenger' }, process.env.JWT_SECRET, { expiresIn });
 }
 
 // Normal login & register
@@ -33,5 +33,6 @@ router.post('/register', registerUser);
 router.post('/login', loginUser);
 // User profile
 router.get('/profile', protect, getUserProfile);
+router.put('/profile', protect, updateUserProfile);
 
 export default router;

@@ -1,10 +1,10 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Navigation } from "lucide-react";
+import { Menu, X, PlusCircle, LayoutDashboard, LogOut, Search, User } from "lucide-react";
+import Logo from "@/components/ui/Logo";
+import { toast } from "sonner";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,23 +13,19 @@ export default function Navbar() {
   const pathname = location.pathname;
   const navigate = useNavigate();
 
-  // Replace isDriverLoggedIn with isLoggedIn and update logic
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!sessionStorage.getItem("userId") || !!sessionStorage.getItem("driverId")
-  );
-  
+  const [driverId, setDriverId] = useState(sessionStorage.getItem("driverId"));
+  const [userId, setUserId] = useState(sessionStorage.getItem("userId"));
+  const isLoggedIn = !!(driverId || userId);
+
   useEffect(() => {
-    setIsLoggedIn(
-      !!sessionStorage.getItem("userId") || !!sessionStorage.getItem("driverId")
-    );
+    setDriverId(sessionStorage.getItem("driverId"));
+    setUserId(sessionStorage.getItem("userId"));
   }, [location]);
-  
-  // Listen for storage changes (multi-tab support)
+
   useEffect(() => {
     const handleStorage = () => {
-      setIsLoggedIn(
-        !!sessionStorage.getItem("userId") || !!sessionStorage.getItem("driverId")
-      );
+      setDriverId(sessionStorage.getItem("driverId"));
+      setUserId(sessionStorage.getItem("userId"));
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
@@ -43,34 +39,20 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on escape key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen]);
-
-  // Trap focus in mobile menu when open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  const handleLogout = () => {
+    sessionStorage.clear();
+    localStorage.removeItem("token");
+    setDriverId(null);
+    setUserId(null);
+    setIsOpen(false);
+    toast.success("Logged out successfully");
+    navigate("/");
+  };
 
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Rides", href: "/rides" },
+    { name: "Find a Ride", href: "/rides" },
+    { name: "Offer a Ride", href: "/rider-dashboard/offer-ride" },
     { name: "About", href: "/about" },
-    { name: "Blog", href: "/blog" },
     { name: "Contact", href: "/contact" },
   ];
 
@@ -78,49 +60,36 @@ export default function Navbar() {
     <motion.nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-lg"
-          : "bg-transparent"
+          ? "backdrop-blur-xl bg-slate-900/90 border-b border-white/10 shadow-lg text-white"
+          : "bg-slate-900/80 backdrop-blur-md border-b border-white/5 text-white"
       }`}
-      initial={{ y: -100 }}
+      initial={{ y: -60 }}
       animate={{ y: 0 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.4 }}
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link 
-            to="/" 
-            className="flex items-center gap-2 group focus-visible:outline-2 focus-visible:outline-blue-600 rounded-lg"
-            aria-label="CoGo - Go to homepage"
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Navigation className="w-5 h-5 text-white" aria-hidden="true" />
-            </div>
-            <span className="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors duration-200">
-              CoGo
-            </span>
-          </Link>
+          <Logo light={true} />
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8" role="menubar">
+          <div className="hidden md:flex items-center gap-7">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`font-medium transition-colors duration-200 relative focus-visible:outline-2 focus-visible:outline-blue-600 rounded px-2 py-1 ${
+                className={`text-sm font-medium transition-colors duration-200 relative py-1 ${
                   pathname === item.href
-                    ? "text-blue-600"
-                    : "text-slate-700 hover:text-blue-600"
+                    ? "text-cyan-400 font-semibold"
+                    : "text-slate-300 hover:text-white"
                 }`}
-                role="menuitem"
-                aria-current={pathname === item.href ? "page" : undefined}
               >
                 {item.name}
                 {pathname === item.href && (
                   <motion.div
-                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
+                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
                     layoutId="activeTab"
                   />
                 )}
@@ -128,107 +97,170 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Desktop CTA Buttons */}
-          <div className="hidden md:flex items-center gap-4">
-            {!isLoggedIn && (
-              <Link to="/role-selection">
+          {/* Desktop Auth / User Controls */}
+          <div className="hidden md:flex items-center gap-3">
+            {!isLoggedIn ? (
+              <>
+                <Link to="/role-selection">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-slate-200 hover:text-white hover:bg-white/10 rounded-xl"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/rides">
+                  <Button 
+                    size="sm"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-xl shadow-md gap-1.5 font-medium"
+                  >
+                    <Search className="w-4 h-4" />
+                    Explore Rides
+                  </Button>
+                </Link>
+              </>
+            ) : driverId ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                  Driver
+                </span>
+                <Link to="/rider-dashboard">
+                  <Button 
+                    variant="outline"
+                    size="sm" 
+                    className="border-white/20 text-white hover:bg-white/10 rounded-xl gap-1.5"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-cyan-400" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Link to="/rider-dashboard/offer-ride">
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-xl gap-1.5 shadow-md"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    Offer Ride
+                  </Button>
+                </Link>
                 <Button 
                   variant="ghost" 
-                  className="text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl focus-visible:outline-2 focus-visible:outline-blue-600"
+                  size="sm" 
+                  onClick={handleLogout}
+                  className="text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl"
+                  title="Logout"
                 >
-                  Sign In
+                  <LogOut className="w-4 h-4" />
                 </Button>
-              </Link>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2.5 py-1 rounded-full border border-cyan-500/30">
+                  Passenger
+                </span>
+                <Link to="/user-dashboard">
+                  <Button 
+                    variant="outline"
+                    size="sm" 
+                    className="border-white/20 text-white hover:bg-white/10 rounded-xl gap-1.5"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-cyan-400" />
+                    My Bookings
+                  </Button>
+                </Link>
+                <Link to="/rides">
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-xl gap-1.5 shadow-md"
+                  >
+                    <Search className="w-4 h-4" />
+                    Find Rides
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleLogout}
+                  className="text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
             )}
-            <Button 
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-              onClick={() => navigate('/rides')}
-            >
-              Get Started
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-white/20 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-blue-600"
+            className="md:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
             aria-label={isOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isOpen}
-            aria-controls="mobile-menu"
           >
-            {isOpen ? (
-              <X className="w-6 h-6 text-slate-700" aria-hidden="true" />
-            ) : (
-              <Menu className="w-6 h-6 text-slate-700" aria-hidden="true" />
-            )}
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            id="mobile-menu"
-            className="md:hidden fixed inset-0 top-16 backdrop-blur-xl bg-white/95 z-40"
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mobile navigation menu"
+            className="md:hidden fixed inset-0 top-16 bg-slate-950/95 backdrop-blur-2xl z-40 p-6 flex flex-col justify-between border-t border-white/10"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className="flex flex-col h-full">
-              <div className="flex-1 px-4 py-8">
-                <nav className="space-y-6" role="menubar" aria-orientation="vertical">
-                  {navItems.map((item, index) => (
-                    <motion.div
-                      key={item.name}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                    >
-                      <Link
-                        to={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className={`block text-2xl font-semibold py-3 px-4 rounded-xl transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-blue-600 ${
-                          pathname === item.href
-                            ? "text-blue-600 bg-blue-50"
-                            : "text-slate-700 hover:text-blue-600 hover:bg-blue-50"
-                        }`}
-                        role="menuitem"
-                        aria-current={pathname === item.href ? "page" : undefined}
-                      >
-                        {item.name}
-                      </Link>
-                    </motion.div>
-                  ))}
-                </nav>
-              </div>
+            <div className="space-y-4">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`block text-lg font-medium p-3 rounded-xl transition-colors ${
+                    pathname === item.href
+                      ? "text-cyan-400 bg-white/5 border border-cyan-500/20"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
 
-              <div className="p-4 border-t border-slate-200 space-y-4">
-                {!isLoggedIn && (
-                  <Link to="/role-selection">
-                    <Button
-                      variant="outline"
-                      className="w-full py-3 text-lg rounded-xl border-2 border-blue-200 hover:bg-blue-50 bg-transparent focus-visible:outline-2 focus-visible:outline-blue-600"
-                      onClick={() => setIsOpen(false)}
-                    >
+            <div className="pt-6 border-t border-white/10 space-y-3">
+              {!isLoggedIn ? (
+                <>
+                  <Link to="/role-selection" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full border-white/20 text-white rounded-xl py-2.5 mb-2">
                       Sign In
                     </Button>
                   </Link>
-                )}
-                <Button
-                  className="w-full py-3 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                  onClick={() => {
-                    setIsOpen(false);
-                    navigate('/rides');
-                  }}
-                >
-                  Get Started
-                </Button>
-              </div>
+                  <Link to="/rides" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl py-2.5">
+                      Find a Ride
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to={driverId ? "/rider-dashboard" : "/user-dashboard"} onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl py-2.5 mb-2 gap-2">
+                      <LayoutDashboard className="w-4 h-4" />
+                      {driverId ? "Driver Dashboard" : "Passenger Dashboard"}
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleLogout}
+                    className="w-full border-rose-500/30 text-rose-400 hover:bg-rose-500/10 rounded-xl py-2.5 gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
